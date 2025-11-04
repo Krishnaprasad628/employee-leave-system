@@ -97,4 +97,19 @@ public class EmployeeService {
     }
 
 
+
+
+    public EmployeeResponseDTO getLeaveBalance(Long employeeId) {
+        Employee employee = employeeDetailsRepo.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + employeeId));
+
+        EmployeeResponseDTO response = new EmployeeResponseDTO();
+        response.setId(employee.getId());
+        response.setName(employee.getName());
+        response.setEmail(employee.getEmail());
+        response.setLeaveBalance(employee.getLeaveBalance());
+
+        return response;
+    }
+
 }

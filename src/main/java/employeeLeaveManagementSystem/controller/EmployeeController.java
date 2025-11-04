@@ -5,11 +5,7 @@ import employeeLeaveManagementSystem.dto.EmployeeResponseDTO;
 import employeeLeaveManagementSystem.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.bind.annotation.*;
 
 
 @RestController
@@ -25,6 +21,11 @@ public class EmployeeController {
         return ResponseEntity.ok(responseDTO);
     }
 
+
+    @GetMapping("/leaveBalanceCheck/{id}")
+    public ResponseEntity<EmployeeResponseDTO> getLeaveBalance(@PathVariable Long id) {
+        return ResponseEntity.ok(employeeService.getLeaveBalance(id));
+    }
 
 
 }
