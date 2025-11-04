@@ -15,16 +15,17 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
-    @PostMapping("/save")
-    public ResponseEntity<EmployeeResponseDTO> saveOrUpdate(@RequestBody EmployeeRequestDTO dto) {
-        EmployeeResponseDTO responseDTO = employeeService.saveOrUpdate(dto);
-        return ResponseEntity.ok(responseDTO);
+
+    //Save Or Update the Employee Details :
+    @PostMapping("/saveOrUpdate")
+    public ResponseEntity<String> saveOrUpdate(@RequestBody EmployeeRequestDTO dto) {
+        return employeeService.saveOrUpdate(dto);
     }
 
 
     @GetMapping("/leaveBalanceCheck/{id}")
-    public ResponseEntity<EmployeeResponseDTO> getLeaveBalance(@PathVariable Long id) {
-        return ResponseEntity.ok(employeeService.getLeaveBalance(id));
+    public ResponseEntity<?> getLeaveBalance(@PathVariable Long id) {
+        return employeeService.getLeaveBalance(id);
     }
 
 

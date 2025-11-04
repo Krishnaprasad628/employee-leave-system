@@ -6,6 +6,8 @@ import employeeLeaveManagementSystem.entity.Employee;
 import employeeLeaveManagementSystem.repository.EmployeeDetailsRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 
@@ -23,17 +25,21 @@ public class EmployeeService {
     public static final BigDecimal MAX_BALANCE = BigDecimal.valueOf(30.0);
 
 
-    @Transactional
-    public EmployeeResponseDTO saveOrUpdate(EmployeeRequestDTO dto) {
+    //Save Or Update the Employee Details :
+    public ResponseEntity<String> saveOrUpdate(EmployeeRequestDTO dto) {
+
         Employee employee;
+        boolean isUpdate = dto.getId() != null;
 
-        if (dto.getId() != null) {
-            employee = employeeDetailsRepo.findById(dto.getId())
-                    .orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + dto.getId()));
+        if (isUpdate) {
+            employee = employeeDetailsRepo.findById(dto.getId()).orElse(null);
 
-            if (!dto.getEmail().equalsIgnoreCase(employee.getEmail())
-                    && employeeDetailsRepo.existsByEmail(dto.getEmail())) {
-                throw new IllegalArgumentException("Email already exists for another employee");
+            if (employee == null) {
+                return new ResponseEntity<>("Employee not found with id: " + dto.getId(), HttpStatus.BAD_REQUEST);
+            }
+
+            if (!dto.getEmail().equalsIgnoreCase(employee.getEmail()) && employeeDetailsRepo.existsByEmail(dto.getEmail())) {
+                return new ResponseEntity<>("Email already exists for another employee", HttpStatus.BAD_REQUEST);
             }
 
             employee.setName(dto.getName());
@@ -42,7 +48,7 @@ public class EmployeeService {
 
         } else {
             if (employeeDetailsRepo.existsByEmail(dto.getEmail())) {
-                throw new IllegalArgumentException("Email already exists");
+                return new ResponseEntity<>("Email already exists", HttpStatus.BAD_REQUEST);
             }
 
             employee = new Employee();
@@ -54,15 +60,13 @@ public class EmployeeService {
         BigDecimal accrued = calculateAccrued(dto.getJoiningDate(), LocalDate.now());
         employee.setLeaveBalance(accrued.min(MAX_BALANCE));
 
-        Employee saved = employeeDetailsRepo.save(employee);
-        EmployeeResponseDTO response = new EmployeeResponseDTO();
-        response.setId(saved.getId());
-        response.setName(saved.getName());
-        response.setEmail(saved.getEmail());
-        response.setJoiningDate(saved.getJoiningDate());
-        response.setLeaveBalance(saved.getLeaveBalance());
+        employeeDetailsRepo.save(employee);
 
-        return response;
+        String message = isUpdate
+                ? "Employee Details Updated Successfully"
+                : "Employee Details Created Successfully";
+
+        return ResponseEntity.ok(message);
     }
 
     public BigDecimal calculateAccrued(LocalDate joiningDate, LocalDate asOf) {
@@ -85,31 +89,39 @@ public class EmployeeService {
 
 
     @Transactional
-    public Employee adjustBalance(Long employeeId, BigDecimal delta) {
-        Employee e = employeeDetailsRepo.findById(employeeId).orElseThrow();
+    public void adjustBalance(Long employeeId, BigDecimal delta) {
+        Employee e = employeeDetailsRepo.findById(employeeId).orElse(null);
+        if (e == null) {
+            return;
+        }
         BigDecimal newBalance = e.getLeaveBalance().add(delta);
         if (newBalance.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Balance would go negative");
+            return;
         }
-        if (newBalance.compareTo(MAX_BALANCE) > 0) newBalance = MAX_BALANCE;
+        if (newBalance.compareTo(MAX_BALANCE) > 0) {
+            newBalance = MAX_BALANCE;
+        }
         e.setLeaveBalance(newBalance);
-        return employeeDetailsRepo.save(e);
+        employeeDetailsRepo.save(e);
     }
 
 
 
 
-    public EmployeeResponseDTO getLeaveBalance(Long employeeId) {
-        Employee employee = employeeDetailsRepo.findById(employeeId)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found with id: " + employeeId));
+    public ResponseEntity<?> getLeaveBalance(Long employeeId) {
+        Employee employee = employeeDetailsRepo.findById(employeeId).orElse(null);
+        if (employee == null) {
+            return new ResponseEntity<>("Employee not found with id: " + employeeId, HttpStatus.BAD_REQUEST);
+        }
 
         EmployeeResponseDTO response = new EmployeeResponseDTO();
         response.setId(employee.getId());
         response.setName(employee.getName());
         response.setEmail(employee.getEmail());
+        response.setJoiningDate(employee.getJoiningDate());
         response.setLeaveBalance(employee.getLeaveBalance());
 
-        return response;
+        return ResponseEntity.ok(response);
     }
 
 }

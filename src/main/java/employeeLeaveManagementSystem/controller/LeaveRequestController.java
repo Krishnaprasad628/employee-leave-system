@@ -21,12 +21,14 @@ public class LeaveRequestController {
 
 
     @PostMapping("/submit")
-    public ResponseEntity<LeaveResponseDTO> submitLeave(@RequestBody LeaveRequestDTO dto) {
+    public ResponseEntity<?> submitLeave(@RequestBody LeaveRequestDTO dto) {
         return ResponseEntity.ok(leaveRequestService.submitLeave(dto));
     }
 
-    @PostMapping("/process")
-    public ResponseEntity<LeaveResponseDTO> processLeave(@RequestBody LeaveActionDTO dto) {
-        return ResponseEntity.ok(leaveRequestService.processLeave(dto));
+
+    //Leave Approval Or Reject :
+    @PostMapping("/leaveApprovalOrReject")
+    public ResponseEntity<String> leaveApprovalOrReject(@RequestBody LeaveActionDTO dto) {
+        return leaveRequestService.leaveApprovalOrReject(dto);
     }
 }

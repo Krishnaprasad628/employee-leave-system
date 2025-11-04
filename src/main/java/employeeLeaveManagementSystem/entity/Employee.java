@@ -21,6 +21,7 @@ public class Employee {
     private String name;
     @Column(unique = true, nullable = false)
     private String email;
+    @Column(name = "joining_date")
     private LocalDate joiningDate;
     private BigDecimal leaveBalance;
 

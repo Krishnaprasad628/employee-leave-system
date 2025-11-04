@@ -11,6 +11,8 @@ import employeeLeaveManagementSystem.repository.EmployeeDetailsRepo;
 import employeeLeaveManagementSystem.repository.LeaveRequestRepo;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -25,23 +27,30 @@ public class LeaveRequestService {
     private final EmployeeDetailsRepo employeeDetailsRepo;
     private final EmployeeService employeeService;
 
-    @Transactional
-    public LeaveResponseDTO submitLeave(LeaveRequestDTO dto) {
 
-        Employee employee = employeeDetailsRepo.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid employee ID"));
+    //Leave Request Submission :
+    @Transactional
+    public ResponseEntity<String> submitLeave(LeaveRequestDTO dto) {
+
+        Employee employee = employeeDetailsRepo.findById(dto.getEmployeeId()).orElse(null);
+
+        if (employee == null) {
+            return new ResponseEntity<>("Invalid employee ID", HttpStatus.BAD_REQUEST);
+        }
 
         List<LeaveRequest> overlaps = leaveRequestRepo.findOverlappingApproved(
-                dto.getEmployeeId(), dto.getStartDate(), dto.getEndDate());
+                dto.getEmployeeId(), dto.getStartDate(), dto.getEndDate()
+        );
 
         if (!overlaps.isEmpty()) {
-            throw new IllegalArgumentException("Overlapping approved leave exists");
+            return new ResponseEntity<>("Overlapping approved leave exists", HttpStatus.BAD_REQUEST);
         }
 
         if (dto.getType() == LeaveType.PRIVILEGED) {
             long days = ChronoUnit.DAYS.between(dto.getStartDate(), dto.getEndDate()) + 1;
+
             if (employee.getLeaveBalance().compareTo(BigDecimal.valueOf(days)) < 0) {
-                throw new IllegalArgumentException("Insufficient privileged leave balance");
+                return new ResponseEntity<>("Insufficient privileged leave balance", HttpStatus.BAD_REQUEST);
             }
         }
 
@@ -52,26 +61,23 @@ public class LeaveRequestService {
         leave.setType(dto.getType());
         leave.setStatus(LeaveStatus.PENDING);
 
-        LeaveRequest saved = leaveRequestRepo.save(leave);
+        leaveRequestRepo.save(leave);
 
-        return new LeaveResponseDTO(
-                saved.getId(),
-                saved.getEmployee().getId(),
-                saved.getStartDate(),
-                saved.getEndDate(),
-                saved.getType(),
-                saved.getStatus()
-        );
+        return ResponseEntity.ok("Leave Request Submitted Successfully");
     }
 
 
+
+    //Leave Approval Or Reject :
     @Transactional
-    public LeaveResponseDTO processLeave(LeaveActionDTO dto) {
-        LeaveRequest leave = leaveRequestRepo.findById(dto.getLeaveRequestId())
-                .orElseThrow(() -> new IllegalArgumentException("Leave request not found"));
+    public ResponseEntity<String> leaveApprovalOrReject(LeaveActionDTO dto) {
+        LeaveRequest leave = leaveRequestRepo.findById(dto.getLeaveRequestId()).orElse(null);
+        if (leave == null) {
+            return new ResponseEntity<>("Leave request not found", HttpStatus.BAD_REQUEST);
+        }
 
         if (leave.getStatus() != LeaveStatus.PENDING) {
-            throw new IllegalStateException("Only pending leaves can be updated");
+            return new ResponseEntity<>("Only pending leaves can be updated", HttpStatus.BAD_REQUEST);
         }
 
         if (dto.getStatus() == LeaveStatus.APPROVED) {
@@ -80,19 +86,14 @@ public class LeaveRequestService {
                 employeeService.adjustBalance(leave.getEmployee().getId(), BigDecimal.valueOf(-days));
             }
             leave.setStatus(LeaveStatus.APPROVED);
+            leaveRequestRepo.save(leave);
+            return ResponseEntity.ok("Approved Successfully");
         } else {
             leave.setStatus(LeaveStatus.REJECTED);
+            leaveRequestRepo.save(leave);
+
+            return ResponseEntity.ok("Rejected Successfully");
         }
-
-        LeaveRequest updated = leaveRequestRepo.save(leave);
-
-        return new LeaveResponseDTO(
-                updated.getId(),
-                updated.getEmployee().getId(),
-                updated.getStartDate(),
-                updated.getEndDate(),
-                LeaveType.valueOf(updated.getType().name()),
-                LeaveStatus.valueOf(updated.getStatus().name())
-        );
     }
+
 }
