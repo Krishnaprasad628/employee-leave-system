@@ -20,8 +20,8 @@ A Spring Boot application that manages employee records and their leave requests
 ### **1. Clone the repository**
 
 ```bash
-git clone <repository-url>
-cd <project-folder>
+git clone https://github.com/Krishnaprasad628/employee-leave-system
+cd Employee-Leave-Management-System-0.0.1-SNAPSHOT.jar
 ```
 
 ### **2. Build and start containers**
@@ -40,12 +40,12 @@ docker ps
 
 ## 📌 API Endpoints
 
-| Method | Endpoint                            | Description                  |
-| ------ | ----------------------------------- | ---------------------------- |
-| `POST` | `/api/employees/saveOrUpdate`       | Create or update an employee |
-| `GET`  | `/api/employees/{id}/balance`       | Get current leave balance    |
-| `POST` | `/api/leaves/submit`                | Submit a leave request       |
-| `POST` | `/api/leaves/leaveApprovalOrReject` | Approve or reject leave      |
+| Method | Endpoint                                | Description                  |
+| ------ |-----------------------------------------| ---------------------------- |
+| `POST` | `/api/employees/saveOrUpdate`           | Create or update an employee |
+| `GET`  | `/api/employees/leaveBalanceCheck/{id}` | Get current leave balance    |
+| `POST` | `/api/leaves/submit`                    | Submit a leave request       |
+| `POST` | `/api/leaves/leaveApprovalOrReject`     | Approve or reject leave      |
 
 ---
 
