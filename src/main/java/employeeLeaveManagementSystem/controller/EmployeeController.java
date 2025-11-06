@@ -22,6 +22,7 @@ public class EmployeeController {
     }
 
 
+    //To List the leave balance :
     @GetMapping("/leaveBalanceCheck/{id}")
     public ResponseEntity<?> getLeaveBalance(@PathVariable Long id) {
         return employeeService.getLeaveBalance(id);

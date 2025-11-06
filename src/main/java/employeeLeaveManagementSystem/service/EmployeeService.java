@@ -7,6 +7,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -107,6 +109,7 @@ public class EmployeeService {
 
 
 
+    //To List the leave balance :
     public ResponseEntity<?> getLeaveBalance(Long employeeId) {
         Employee employee = employeeDetailsRepo.findById(employeeId).orElse(null);
         if (employee == null) {
@@ -121,6 +124,32 @@ public class EmployeeService {
         response.setLeaveBalance(employee.getLeaveBalance());
 
         return ResponseEntity.ok(response);
+    }
+
+
+    //Carry forward the balance leaves :
+    @Transactional
+    public void carryForwardFinancialYearLeave() {
+        List<Employee> employees = employeeDetailsRepo.findAll();
+
+        for (Employee employee : employees) {
+            BigDecimal currentBalance = employee.getLeaveBalance() != null
+                    ? employee.getLeaveBalance()
+                    : BigDecimal.ZERO;
+
+            BigDecimal carryForward = currentBalance.min(BigDecimal.TEN);
+            employee.setLeaveBalance(carryForward);
+        }
+
+        employeeDetailsRepo.saveAll(employees);
+    }
+
+
+
+    // Runs automatically every April 1st at midnight
+    @Scheduled(cron = "0 0 0 1 4 *")
+    public void carryForwardYearlyLeaves() {
+        this.carryForwardFinancialYearLeave();
     }
 
 }
