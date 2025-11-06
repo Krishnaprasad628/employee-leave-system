@@ -1,7 +1,6 @@
 package employeeLeaveManagementSystem.controller;
 
 import employeeLeaveManagementSystem.dto.EmployeeRequestDTO;
-import employeeLeaveManagementSystem.dto.EmployeeResponseDTO;
 import employeeLeaveManagementSystem.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

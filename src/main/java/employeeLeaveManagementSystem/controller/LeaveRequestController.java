@@ -2,7 +2,6 @@ package employeeLeaveManagementSystem.controller;
 
 import employeeLeaveManagementSystem.dto.LeaveActionDTO;
 import employeeLeaveManagementSystem.dto.LeaveRequestDTO;
-import employeeLeaveManagementSystem.dto.LeaveResponseDTO;
 import employeeLeaveManagementSystem.service.LeaveRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

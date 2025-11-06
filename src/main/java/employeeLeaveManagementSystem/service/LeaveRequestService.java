@@ -4,7 +4,6 @@ import employeeLeaveManagementSystem.common.LeaveStatus;
 import employeeLeaveManagementSystem.common.LeaveType;
 import employeeLeaveManagementSystem.dto.LeaveActionDTO;
 import employeeLeaveManagementSystem.dto.LeaveRequestDTO;
-import employeeLeaveManagementSystem.dto.LeaveResponseDTO;
 import employeeLeaveManagementSystem.entity.Employee;
 import employeeLeaveManagementSystem.entity.LeaveRequest;
 import employeeLeaveManagementSystem.repository.EmployeeDetailsRepo;
