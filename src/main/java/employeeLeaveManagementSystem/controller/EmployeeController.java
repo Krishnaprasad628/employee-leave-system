@@ -1,6 +1,6 @@
 package employeeLeaveManagementSystem.controller;
 
-import employeeLeaveManagementSystem.dto.EmployeeRequestDTO;
+import employeeLeaveManagementSystem.dto.EmployeeDTO;
 import employeeLeaveManagementSystem.service.EmployeeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ public class EmployeeController {
 
     //Save Or Update the Employee Details :
     @PostMapping("/saveOrUpdate")
-    public ResponseEntity<String> saveOrUpdate(@RequestBody EmployeeRequestDTO dto) {
+    public ResponseEntity<String> saveOrUpdate(@RequestBody EmployeeDTO dto) {
         return employeeService.saveOrUpdate(dto);
     }
 

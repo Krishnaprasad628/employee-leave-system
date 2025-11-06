@@ -1,7 +1,6 @@
 package employeeLeaveManagementSystem.service;
 
-import employeeLeaveManagementSystem.dto.EmployeeRequestDTO;
-import employeeLeaveManagementSystem.dto.EmployeeResponseDTO;
+import employeeLeaveManagementSystem.dto.EmployeeDTO;
 import employeeLeaveManagementSystem.entity.Employee;
 import employeeLeaveManagementSystem.repository.EmployeeDetailsRepo;
 import jakarta.transaction.Transactional;
@@ -26,7 +25,7 @@ public class EmployeeService {
 
 
     //Save Or Update the Employee Details :
-    public ResponseEntity<String> saveOrUpdate(EmployeeRequestDTO dto) {
+    public ResponseEntity<String> saveOrUpdate(EmployeeDTO dto) {
 
         Employee employee;
         boolean isUpdate = dto.getId() != null;
@@ -114,7 +113,7 @@ public class EmployeeService {
             return new ResponseEntity<>("Employee not found with id: " + employeeId, HttpStatus.BAD_REQUEST);
         }
 
-        EmployeeResponseDTO response = new EmployeeResponseDTO();
+        EmployeeDTO response = new EmployeeDTO();
         response.setId(employee.getId());
         response.setName(employee.getName());
         response.setEmail(employee.getEmail());

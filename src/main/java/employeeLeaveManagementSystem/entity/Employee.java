@@ -19,9 +19,7 @@ public class Employee {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
-    @Column(unique = true, nullable = false)
     private String email;
-    @Column(name = "joining_date")
     private LocalDate joiningDate;
     private BigDecimal leaveBalance;
 
