@@ -4,7 +4,8 @@ import employeeLeaveManagementSystem.dto.EmployeeDTO;
 import employeeLeaveManagementSystem.entity.Employee;
 import employeeLeaveManagementSystem.repository.EmployeeDetailsRepo;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -12,80 +13,82 @@ import org.springframework.stereotype.Service;
 
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class EmployeeService {
 
     private final EmployeeDetailsRepo employeeDetailsRepo;
+
+    public EmployeeService(EmployeeDetailsRepo employeeDetailsRepo) {
+        this.employeeDetailsRepo = employeeDetailsRepo;
+    }
+
     public static final BigDecimal ACCRUAL_PER_MONTH = BigDecimal.valueOf(1.75);
     public static final BigDecimal MAX_BALANCE = BigDecimal.valueOf(30.0);
 
 
     //Save Or Update the Employee Details :
-    public ResponseEntity<String> saveOrUpdate(EmployeeDTO dto) {
+    public ResponseEntity<String> saveOrUpdate(EmployeeDTO request) {
+        String response;
+        try {
+            boolean isUpdate = request.getId() != null;
 
-        Employee employee;
-        boolean isUpdate = dto.getId() != null;
+            Employee employee = isUpdate ? fetchEmployeeDetails(request.getId()) : new Employee();
 
-        if (isUpdate) {
-            employee = employeeDetailsRepo.findById(dto.getId()).orElse(null);
-
-            if (employee == null) {
-                return new ResponseEntity<>("Employee not found with id: " + dto.getId(), HttpStatus.BAD_REQUEST);
-            }
-
-            if (!dto.getEmail().equalsIgnoreCase(employee.getEmail()) && employeeDetailsRepo.existsByEmail(dto.getEmail())) {
-                return new ResponseEntity<>("Email already exists for another employee", HttpStatus.BAD_REQUEST);
-            }
-
-            employee.setName(dto.getName());
-            employee.setEmail(dto.getEmail());
-            employee.setJoiningDate(dto.getJoiningDate());
-
-        } else {
-            if (employeeDetailsRepo.existsByEmail(dto.getEmail())) {
+            if (emailExists(request.getEmail(), employee)) {
                 return new ResponseEntity<>("Email already exists", HttpStatus.BAD_REQUEST);
             }
 
-            employee = new Employee();
-            employee.setName(dto.getName());
-            employee.setEmail(dto.getEmail());
-            employee.setJoiningDate(dto.getJoiningDate());
+            updateEmployeeDetails(employee, request);
+            employee.setLeaveBalance(calculateLeave(request.getJoiningDate()));
+
+            employeeDetailsRepo.save(employee);
+
+            response = isUpdate ? "Employee Updated Successfully" : "Employee Saved Successfully";
+
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException ex) {
+            log.error("Error saving or updating employee: {}", ex.getMessage(), ex);
+            return new ResponseEntity<>("Failed to Save or Update employee: " + ex.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
-        BigDecimal accrued = calculateAccrued(dto.getJoiningDate(), LocalDate.now());
-        employee.setLeaveBalance(accrued.min(MAX_BALANCE));
-
-        employeeDetailsRepo.save(employee);
-
-        String message = isUpdate
-                ? "Employee Details Updated Successfully"
-                : "Employee Details Created Successfully";
-
-        return ResponseEntity.ok(message);
     }
 
-    public BigDecimal calculateAccrued(LocalDate joiningDate, LocalDate asOf) {
-        if (joiningDate == null || asOf == null || joiningDate.isAfter(asOf)) {
-            return BigDecimal.ZERO;
+
+    private Employee fetchEmployeeDetails(Long id) {
+        return employeeDetailsRepo.findById(id).orElseThrow(() -> new RuntimeException("Employee Id is not found" + id));
+    }
+
+
+    private boolean emailExists(String email, Employee employee) {
+        if (employee.getId() == null) {
+            return employeeDetailsRepo.existsByEmail(email);
+        } else {
+            return !email.equalsIgnoreCase(employee.getEmail()) && employeeDetailsRepo.existsByEmail(email);
         }
+    }
 
-        long fullMonths = ChronoUnit.MONTHS.between(joiningDate.withDayOfMonth(1),
-                asOf.withDayOfMonth(1)
-        );
 
-        BigDecimal accrual = ACCRUAL_PER_MONTH.multiply(BigDecimal.valueOf(fullMonths));
+    private void updateEmployeeDetails(Employee employee, EmployeeDTO request) {
+        employee.setName(request.getName());
+        employee.setEmail(request.getEmail());
+        employee.setJoiningDate(request.getJoiningDate());
+    }
 
-        if (accrual.compareTo(MAX_BALANCE) > 0) {
-            accrual = MAX_BALANCE;
-        }
+    private BigDecimal calculateLeave(LocalDate joinedDate) {
+        BigDecimal accrued = calculateAccrued(joinedDate, LocalDate.now());
+        return accrued.min(MAX_BALANCE);
+    }
 
-        return accrual.setScale(2, RoundingMode.HALF_UP);
+
+    private BigDecimal calculateAccrued(LocalDate joinedDate, LocalDate currentDate) {
+        long monthWorked = ChronoUnit.MONTHS.between(joinedDate.withDayOfMonth(1), currentDate.withDayOfMonth(1));
+        BigDecimal accrualPerMonth = new BigDecimal(String.valueOf(ACCRUAL_PER_MONTH));
+        return accrualPerMonth.multiply(BigDecimal.valueOf(monthWorked));
     }
 
 
@@ -105,8 +108,6 @@ public class EmployeeService {
         e.setLeaveBalance(newBalance);
         employeeDetailsRepo.save(e);
     }
-
-
 
 
     //To List the leave balance :
@@ -143,7 +144,6 @@ public class EmployeeService {
 
         employeeDetailsRepo.saveAll(employees);
     }
-
 
 
     // Runs automatically every April 1st at midnight

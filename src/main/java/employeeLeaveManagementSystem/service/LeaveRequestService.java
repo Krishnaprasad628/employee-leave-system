@@ -9,7 +9,7 @@ import employeeLeaveManagementSystem.entity.LeaveRequest;
 import employeeLeaveManagementSystem.repository.EmployeeDetailsRepo;
 import employeeLeaveManagementSystem.repository.LeaveRequestRepo;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,12 +19,17 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class LeaveRequestService {
 
     private final LeaveRequestRepo leaveRequestRepo;
     private final EmployeeDetailsRepo employeeDetailsRepo;
     private final EmployeeService employeeService;
+
+    public LeaveRequestService(LeaveRequestRepo leaveRequestRepo, EmployeeDetailsRepo employeeDetailsRepo, EmployeeService employeeService) {
+        this.leaveRequestRepo = leaveRequestRepo;
+        this.employeeDetailsRepo = employeeDetailsRepo;
+        this.employeeService = employeeService;
+    }
 
 
     //Leave Request Submission :
@@ -64,7 +69,6 @@ public class LeaveRequestService {
 
         return ResponseEntity.ok("Leave Request Submitted Successfully");
     }
-
 
 
     //Leave Approval Or Reject :

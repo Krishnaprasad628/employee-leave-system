@@ -2,17 +2,19 @@ package employeeLeaveManagementSystem.controller;
 
 import employeeLeaveManagementSystem.dto.EmployeeDTO;
 import employeeLeaveManagementSystem.service.EmployeeService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/employeeDetails")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
+
+    public EmployeeController(EmployeeService employeeService){
+        this.employeeService = employeeService;
+    }
 
 
     //Save Or Update the Employee Details :
