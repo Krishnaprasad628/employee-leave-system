@@ -3,6 +3,7 @@ package employeeLeaveManagementSystem.service;
 import employeeLeaveManagementSystem.common.LeaveStatus;
 import employeeLeaveManagementSystem.common.LeaveType;
 import employeeLeaveManagementSystem.dto.LeaveActionDTO;
+import employeeLeaveManagementSystem.dto.LeaveEventDTO;
 import employeeLeaveManagementSystem.dto.LeaveRequestDTO;
 import employeeLeaveManagementSystem.entity.Employee;
 import employeeLeaveManagementSystem.entity.LeaveRequest;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -24,11 +26,13 @@ public class LeaveRequestService {
     private final LeaveRequestRepo leaveRequestRepo;
     private final EmployeeDetailsRepo employeeDetailsRepo;
     private final EmployeeService employeeService;
+    private final LeaveEventProducerService leaveEventProducerService;
 
-    public LeaveRequestService(LeaveRequestRepo leaveRequestRepo, EmployeeDetailsRepo employeeDetailsRepo, EmployeeService employeeService) {
+    public LeaveRequestService(LeaveRequestRepo leaveRequestRepo, EmployeeDetailsRepo employeeDetailsRepo, EmployeeService employeeService, LeaveEventProducerService leaveEventProducerService) {
         this.leaveRequestRepo = leaveRequestRepo;
         this.employeeDetailsRepo = employeeDetailsRepo;
         this.employeeService = employeeService;
+        this.leaveEventProducerService = leaveEventProducerService;
     }
 
 
@@ -83,6 +87,7 @@ public class LeaveRequestService {
             return new ResponseEntity<>("Only pending leaves can be updated", HttpStatus.BAD_REQUEST);
         }
 
+        Long employeeId = leave.getEmployee().getId();
         if (dto.getStatus() == LeaveStatus.APPROVED) {
             if (leave.getType() == LeaveType.PRIVILEGED) {
                 long days = ChronoUnit.DAYS.between(leave.getStartDate(), leave.getEndDate()) + 1;
@@ -90,8 +95,20 @@ public class LeaveRequestService {
             }
             leave.setStatus(LeaveStatus.APPROVED);
             leaveRequestRepo.save(leave);
+
+            LeaveEventDTO event = new LeaveEventDTO(
+                    "LEAVE_APPROVED",
+                    employeeId,
+                    leave.getStartDate(),
+                    leave.getEndDate(),
+                    ChronoUnit.DAYS.between(leave.getStartDate(), leave.getEndDate()) + 1,
+                    ZonedDateTime.now()
+            );
+
+            leaveEventProducerService.publishLeaveApprovedEvent(event);
             return ResponseEntity.ok("Approved Successfully");
-        } else {
+        }
+        else {
             leave.setStatus(LeaveStatus.REJECTED);
             leaveRequestRepo.save(leave);
 
