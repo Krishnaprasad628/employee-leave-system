@@ -30,5 +30,11 @@ public class EmployeeController {
         return employeeService.getLeaveBalance(id);
     }
 
+    @GetMapping("/getCachedBalance/{id}")
+    public ResponseEntity<?> getBalance(@PathVariable Long id) {
+        EmployeeDTO dto = employeeService.getCachedBalance(id);
+        return ResponseEntity.ok(dto);
+    }
+
 
 }

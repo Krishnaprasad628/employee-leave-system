@@ -6,6 +6,7 @@ import employeeLeaveManagementSystem.repository.EmployeeDetailsRepo;
 import jakarta.transaction.Transactional;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -151,5 +152,27 @@ public class EmployeeService {
     public void carryForwardYearlyLeaves() {
         this.carryForwardFinancialYearLeave();
     }
+
+
+
+    @Cacheable(value = "balance", key = "#employeeId")
+    public EmployeeDTO getCachedBalance(Long employeeId) {
+        log.info("CACHE MISS → Fetching from DB for employeeId={}", employeeId);
+
+        Employee employee = employeeDetailsRepo.findById(employeeId).orElse(null);
+        if (employee == null) {
+            return null;
+        }
+
+        EmployeeDTO response = new EmployeeDTO();
+        response.setId(employee.getId());
+        response.setName(employee.getName());
+        response.setEmail(employee.getEmail());
+        response.setJoiningDate(employee.getJoiningDate());
+        response.setLeaveBalance(employee.getLeaveBalance());
+
+        return response;
+    }
+
 
 }
