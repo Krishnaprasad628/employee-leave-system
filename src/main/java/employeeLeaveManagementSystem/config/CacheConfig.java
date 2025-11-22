@@ -25,4 +25,5 @@ public class CacheConfig {
         template.setValueSerializer(new StringRedisSerializer());
         return template;
     }
+
 }
