@@ -19,16 +19,16 @@ public class LeaveEventProducerService {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void publishLeaveApprovedEvent(LeaveEventDTO event) {
-        log.info("Publishing LeaveEvent: {}", event);
+    public void sendLeaveApprovedEvent(LeaveEventDTO event) {
+        log.info("Sending LeaveEvent: {}", event);
 
         kafkaTemplate.send(topic, event)
                 .whenComplete((result, ex) -> {
                     if (ex == null) {
-                        log.info("Leave event published successfully. Offset={}",
+                        log.info("Leave event sent successfully. Offset={}",
                                 result.getRecordMetadata().offset());
                     } else {
-                        log.error("Failed to publish leave event", ex);
+                        log.error("Failed to send leave event", ex);
                     }
                 });
     }

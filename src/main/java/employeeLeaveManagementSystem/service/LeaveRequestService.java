@@ -105,7 +105,7 @@ public class LeaveRequestService {
                     ZonedDateTime.now()
             );
 
-            leaveEventProducerService.publishLeaveApprovedEvent(event);
+            leaveEventProducerService.sendLeaveApprovedEvent(event);
             return ResponseEntity.ok("Approved Successfully");
         }
         else {
