@@ -1,1 +1,4 @@
-rootProject.name = 'Employee-Leave-Management-System'
+rootProject.name = 'leave-management-system'
+
+include 'leave-service'
+include 'notification-service'
